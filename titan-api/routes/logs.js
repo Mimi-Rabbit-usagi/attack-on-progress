@@ -5,14 +5,14 @@ const router = express.Router();
 
 router.get("/", (req, res) => {
   try {
-    const logs = db.prepare("SELECT * FROM logs ").all();
-    if (req.query.action === "created") {
-      const createdlogs = db
+    if (req.query.action !== undefined) {
+      const logs = db
         .prepare("SELECT * FROM logs WHERE action = ?")
         .all(req.query.action);
-      res.json(createdlogs);
+      return res.json(logs);
     } else {
-      res.json(logs);
+      const logs = db.prepare("SELECT * FROM logs").all();
+      return res.json(logs);
     }
   } catch (err) {
     console.error(err);
