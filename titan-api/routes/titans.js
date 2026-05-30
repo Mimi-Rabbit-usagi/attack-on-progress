@@ -32,6 +32,30 @@ router.get("/", (req, res) => {
   }
 });
 
+router.get("/summary", (req, res) => {
+  try {
+    const summary = db
+      .prepare("SELECT type, COUNT(*) as count FROM titans GROUP BY type")
+      .all();
+    return res.json(summary);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "サーバーエラーが発生しました" });
+  }
+});
+
+router.get("/type/:type", (req, res) => {
+  try {
+    const titans = db
+      .prepare("SELECT * FROM titans WHERE type = ?")
+      .all(req.params.type);
+    res.json(titans);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "サーバーエラーが発生しました" });
+  }
+});
+
 router.get("/:id/logs", (req, res) => {
   try {
     const titans = db
@@ -56,18 +80,6 @@ router.get("/:id", (req, res) => {
     } else {
       return res.status(404).json(`${req.params.id}は見つかりません`);
     }
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "サーバーエラーが発生しました" });
-  }
-});
-
-router.get("/type/:type", (req, res) => {
-  try {
-    const titans = db
-      .prepare("SELECT * FROM titans WHERE type = ?")
-      .all(req.params.type);
-    res.json(titans);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "サーバーエラーが発生しました" });

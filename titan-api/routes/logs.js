@@ -20,4 +20,16 @@ router.get("/", (req, res) => {
   }
 });
 
+router.get("/summary", (req, res) => {
+  try {
+    const summary = db
+      .prepare("SELECT action, COUNT(*) as count FROM logs GROUP BY action")
+      .all();
+    return res.json(summary);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "サーバーエラーが発生しました" });
+  }
+});
+
 module.exports = router;
