@@ -60,7 +60,7 @@ router.get("/:id/logs", (req, res) => {
   try {
     const titans = db
       .prepare(
-        "SELECT * FROM titans JOIN logs ON titans.name = logs.titan_name WHERE titans.id = ?",
+        "SELECT * FROM titans JOIN logs ON titans.id = logs.titan_id WHERE titans.id = ?",
       )
       .all(req.params.id);
     res.json(titans);
@@ -97,9 +97,14 @@ router.post("/", validateTitan, (req, res) => {
         .run(name, size, type, ability);
       const logs = db
         .prepare(
-          "INSERT INTO logs (action, titan_name, status,created_at) VALUES(?, ?, ?, ?)",
+          "INSERT INTO logs (action, titan_id, status,created_at) VALUES(?, ?, ?, ?)",
         )
-        .run("created", name, "success", new Date().toISOString());
+        .run(
+          "created",
+          result.lastInsertRowid,
+          "success",
+          new Date().toISOString(),
+        );
       const newTitan = db
         .prepare("SELECT * FROM titans WHERE id = ?")
         .get(result.lastInsertRowid);
@@ -111,9 +116,9 @@ router.post("/", validateTitan, (req, res) => {
     console.error(err);
     const logs = db
       .prepare(
-        "INSERT INTO logs (action, titan_name, status,created_at) VALUES(?, ?, ?, ?)",
+        "INSERT INTO logs (action, titan_id, status,created_at) VALUES(?, ?, ?, ?)",
       )
-      .run("error", "unknown", "failed", new Date().toISOString());
+      .run("error", null, "failed", new Date().toISOString());
     res.status(500).json({ error: "サーバーエラーが発生しました" });
   }
 });
@@ -132,9 +137,9 @@ router.put("/:id", validateTitan, (req, res) => {
       }
       const logs = db
         .prepare(
-          "INSERT INTO logs (action, titan_name, status,created_at) VALUES(?, ?, ?, ?)",
+          "INSERT INTO logs (action, titan_id, status,created_at) VALUES(?, ?, ?, ?)",
         )
-        .run("updated", name, "success", new Date().toISOString());
+        .run("updated", req.params.id, "success", new Date().toISOString());
       const updatedTitan = db
         .prepare("SELECT * FROM titans WHERE id = ?")
         .get(req.params.id);
@@ -145,9 +150,9 @@ router.put("/:id", validateTitan, (req, res) => {
     console.error(err);
     const logs = db
       .prepare(
-        "INSERT INTO logs (action, titan_name, status,created_at) VALUES(?, ?, ?, ?)",
+        "INSERT INTO logs (action, titan_id, status,created_at) VALUES(?, ?, ?, ?)",
       )
-      .run("error", "unknown", "failed", new Date().toISOString());
+      .run("error", req.params.id, "failed", new Date().toISOString());
     res.status(500).json({ error: "サーバーエラーが発生しました" });
   }
 });
@@ -174,9 +179,9 @@ router.patch("/:id", validateTitanPatch, (req, res) => {
 
       const logs = db
         .prepare(
-          "INSERT INTO logs (action, titan_name, status,created_at) VALUES(?, ?, ?, ?)",
+          "INSERT INTO logs (action, titan_id, status,created_at) VALUES(?, ?, ?, ?)",
         )
-        .run("updated", updatedTitan.name, "success", new Date().toISOString());
+        .run("updated",  req.params.id, "success", new Date().toISOString());
 
       res.json(updatedTitan);
     });
@@ -185,9 +190,9 @@ router.patch("/:id", validateTitanPatch, (req, res) => {
     console.error(err);
     const logs = db
       .prepare(
-        "INSERT INTO logs (action, titan_name, status,created_at) VALUES(?, ?, ?, ?)",
+        "INSERT INTO logs (action, titan_id, status,created_at) VALUES(?, ?, ?, ?)",
       )
-      .run("error", "unknown", "failed", new Date().toISOString());
+      .run("error", req.params.id, "failed", new Date().toISOString());
     res.status(500).json({ error: "サーバーエラーが発生しました" });
   }
 });
@@ -202,8 +207,8 @@ router.delete("/:id", (req, res) => {
         return res.status(404).json(`${req.params.id}は見つかりません`);
       }
       db.prepare(
-        "INSERT INTO logs (action, titan_name, status, created_at) VALUES(?, ?, ?, ?)",
-      ).run("deleted", titan.name, "success", new Date().toISOString());
+        "INSERT INTO logs (action, titan_id, status, created_at) VALUES(?, ?, ?, ?)",
+      ).run("deleted",  titan.id, "success", new Date().toISOString());
 
       db.prepare("DELETE FROM titans WHERE id=?").run(req.params.id);
       res.json("削除しました");
@@ -214,9 +219,9 @@ router.delete("/:id", (req, res) => {
     console.error(err);
     const logs = db
       .prepare(
-        "INSERT INTO logs (action, titan_name, status,created_at) VALUES(?, ?, ?, ?)",
+        "INSERT INTO logs (action, titan_id, status,created_at) VALUES(?, ?, ?, ?)",
       )
-      .run("error", "unknown", "failed", new Date().toISOString());
+      .run("error",  req.params.id, "failed", new Date().toISOString());
     res.status(500).json({ error: "サーバーエラーが発生しました" });
   }
 });
