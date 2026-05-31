@@ -154,28 +154,33 @@ router.put("/:id", validateTitan, (req, res) => {
 
 router.patch("/:id", validateTitanPatch, (req, res) => {
   try {
-    const allowedFields = ["name", "size", "type", "ability"];
-    const updates = Object.fromEntries(
-      Object.entries(req.body).filter(([key]) => allowedFields.includes(key)),
-    );
-    const setClauses = Object.keys(updates).map((key) => `${key}=?`);
-    const values = Object.values(updates);
+    const updateTitan = db.transaction(() => {
+      const allowedFields = ["name", "size", "type", "ability"];
+      const updates = Object.fromEntries(
+        Object.entries(req.body).filter(([key]) => allowedFields.includes(key)),
+      );
+      const setClauses = Object.keys(updates).map((key) => `${key}=?`);
+      const values = Object.values(updates);
 
-    const result = db
-      .prepare(`UPDATE titans SET ${setClauses.join(",")} WHERE id=?`)
-      .run(...values, req.params.id);
-    if (result.changes === 0) {
-      return res.status(404).json(`${req.params.id}は見つかりません`);
-    }
-    const logs = db
-      .prepare(
-        "INSERT INTO logs (action, titan_name, status,created_at) VALUES(?, ?, ?, ?)",
-      )
-      .run("updated", name, "success", new Date().toISOString());
-    const updatedTitan = db
-      .prepare("SELECT * FROM titans WHERE id = ?")
-      .get(req.params.id);
-    res.json(updatedTitan);
+      const result = db
+        .prepare(`UPDATE titans SET ${setClauses.join(",")} WHERE id=?`)
+        .run(...values, req.params.id);
+      if (result.changes === 0) {
+        return res.status(404).json(`${req.params.id}は見つかりません`);
+      }
+      const updatedTitan = db
+        .prepare("SELECT * FROM titans WHERE id = ?")
+        .get(req.params.id);
+
+      const logs = db
+        .prepare(
+          "INSERT INTO logs (action, titan_name, status,created_at) VALUES(?, ?, ?, ?)",
+        )
+        .run("updated", updatedTitan.name, "success", new Date().toISOString());
+
+      res.json(updatedTitan);
+    });
+    return updateTitan();
   } catch (err) {
     console.error(err);
     const logs = db
