@@ -18,7 +18,8 @@ db.exec(`
     CREATE TABLE IF NOT EXISTS logs (                            
         id INTEGER PRIMARY KEY AUTOINCREMENT,                        
         action TEXT NOT NULL,                                          
-        titan_id INTEGER,                                     
+        titan_id INTEGER,
+        details TEXT,                                
         status TEXT NOT NULL,                                          
         created_at TEXT NOT NULL                                        
     )

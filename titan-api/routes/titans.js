@@ -160,6 +160,7 @@ router.put("/:id", validateTitan, (req, res) => {
 router.patch("/:id", validateTitanPatch, (req, res) => {
   try {
     const updateTitan = db.transaction(() => {
+      const beforeTitan = db.prepare("SELECT * FROM titans WHERE id = ?").get(req.params.id);
       const allowedFields = ["name", "size", "type", "ability"];
       const updates = Object.fromEntries(
         Object.entries(req.body).filter(([key]) => allowedFields.includes(key)),
@@ -177,11 +178,13 @@ router.patch("/:id", validateTitanPatch, (req, res) => {
         .prepare("SELECT * FROM titans WHERE id = ?")
         .get(req.params.id);
 
+      const details = Object.keys(updates).map((key)=> `${key}: ${beforeTitan[key]} → ${updatedTitan[key]}`).join(",");
+
       const logs = db
         .prepare(
-          "INSERT INTO logs (action, titan_id, status,created_at) VALUES(?, ?, ?, ?)",
+          "INSERT INTO logs (action, titan_id, details, status, created_at) VALUES(?, ?, ?, ?, ?)",
         )
-        .run("updated",  req.params.id, "success", new Date().toISOString());
+        .run("updated",  req.params.id, details,"success", new Date().toISOString());
 
       res.json(updatedTitan);
     });
@@ -190,9 +193,9 @@ router.patch("/:id", validateTitanPatch, (req, res) => {
     console.error(err);
     const logs = db
       .prepare(
-        "INSERT INTO logs (action, titan_id, status,created_at) VALUES(?, ?, ?, ?)",
+        "INSERT INTO logs (action, titan_id, details, status, created_at) VALUES(?, ?, ?, ?, ?)",
       )
-      .run("error", req.params.id, "failed", new Date().toISOString());
+      .run("error", req.params.id, null, "failed", new Date().toISOString());
     res.status(500).json({ error: "サーバーエラーが発生しました" });
   }
 });
