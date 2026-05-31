@@ -120,18 +120,27 @@ router.post("/", validateTitan, (req, res) => {
 
 router.put("/:id", validateTitan, (req, res) => {
   try {
-    const { name, size, type, ability } = req.body;
-
-    const result = db
-      .prepare("UPDATE titans SET name=?, size=?, type=?, ability=? WHERE id=?")
-      .run(name, size, type, ability, req.params.id);
-    if (result.changes === 0) {
-      return res.status(404).json(`${req.params.id}は見つかりません`);
-    }
-    const updatedTitan = db
-      .prepare("SELECT * FROM titans WHERE id = ?")
-      .get(req.params.id);
-    res.json(updatedTitan);
+    const updateTitan = db.transaction(() => {
+      const { name, size, type, ability } = req.body;
+      const result = db
+        .prepare(
+          "UPDATE titans SET name=?, size=?, type=?, ability=? WHERE id=?",
+        )
+        .run(name, size, type, ability, req.params.id);
+      if (result.changes === 0) {
+        return res.status(404).json(`${req.params.id}は見つかりません`);
+      }
+      const logs = db
+        .prepare(
+          "INSERT INTO logs (action, titan_name, status,created_at) VALUES(?, ?, ?, ?)",
+        )
+        .run("updated", name, "success", new Date().toISOString());
+      const updatedTitan = db
+        .prepare("SELECT * FROM titans WHERE id = ?")
+        .get(req.params.id);
+      res.json(updatedTitan);
+    });
+    return updateTitan();
   } catch (err) {
     console.error(err);
     const logs = db
@@ -158,7 +167,11 @@ router.patch("/:id", validateTitanPatch, (req, res) => {
     if (result.changes === 0) {
       return res.status(404).json(`${req.params.id}は見つかりません`);
     }
-
+    const logs = db
+      .prepare(
+        "INSERT INTO logs (action, titan_name, status,created_at) VALUES(?, ?, ?, ?)",
+      )
+      .run("updated", name, "success", new Date().toISOString());
     const updatedTitan = db
       .prepare("SELECT * FROM titans WHERE id = ?")
       .get(req.params.id);
