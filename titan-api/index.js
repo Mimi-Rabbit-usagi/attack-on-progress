@@ -1,5 +1,6 @@
 const express = require("express");
 const titansRouter = require("./routes/titans");
+const usersRouter = require("./routes/users");
 const logsRouter = require("./routes/logs");
 const app = express();
 const port = 3000;
@@ -11,7 +12,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/titans", titansRouter);
-
+app.use("/users", usersRouter);
 app.use("/logs", logsRouter);
 
 app.listen(port, () => {
