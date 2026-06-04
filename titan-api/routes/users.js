@@ -2,6 +2,7 @@ const express = require("express");
 const Database = require("better-sqlite3");
 const db = new Database(`${__dirname}/../data/titans.db`);
 const router = express.Router();
+const validateUserPatch = require("../middleware/validateUserPatch");
 
 router.get("/:id", (req, res) => {
   try {
@@ -36,6 +37,35 @@ router.post("/", (req, res) => {
     });
     const newUser = addUser();
     res.status(201).json(newUser);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "サーバーエラーが発生しました" });
+  }
+});
+
+router.patch("/:id", validateUserPatch, (req, res) => {
+  try {
+    const updateUser = db.transaction(() => {
+      const allowedFields = ["name", "email", "password"];
+      const updates = Object.fromEntries(
+        Object.entries(req.body).filter(([key]) => allowedFields.includes(key)),
+      );
+      const setClauses = Object.keys(updates).map((key) => `${key}=?`);
+      const values = Object.values(updates);
+
+      const result = db
+        .prepare(`UPDATE users SET ${setClauses.join(",")} WHERE id=?`)
+        .run(...values, req.params.id);
+      if (result.changes === 0) {
+        return res.status(404).json(`${req.params.id}は見つかりません`);
+      }
+      const updatedUser = db
+        .prepare("SELECT id, name, email, created_at FROM users WHERE id = ?")
+        .get(req.params.id);
+
+      res.json(updatedUser);
+    });
+    return updateUser();
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "サーバーエラーが発生しました" });
