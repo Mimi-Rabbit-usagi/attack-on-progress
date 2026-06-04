@@ -8,8 +8,10 @@ router.post("/", (req, res) => {
     const addUser = db.transaction(() => {
       const { name, email, password } = req.body;
       const result = db
-        .prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)")
-        .run(name, email, password);
+        .prepare(
+          "INSERT INTO users (name, email, password, created_at) VALUES (?, ?, ?, ?)",
+        )
+        .run(name, email, password, new Date().toISOString());
 
       const newUser = db
         .prepare("SELECT id, name, email, created_at FROM users WHERE id = ?")
@@ -23,5 +25,7 @@ router.post("/", (req, res) => {
     res.status(500).json({ error: "サーバーエラーが発生しました" });
   }
 });
+
+
 
 module.exports = router;

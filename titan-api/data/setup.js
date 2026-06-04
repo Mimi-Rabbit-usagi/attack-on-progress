@@ -36,7 +36,7 @@ db.exec(`
 `);
 
 const insert = db.prepare(`
-    INSERT INTO titans (id, name, size, type, ability)
+    INSERT OR IGNORE INTO titans (id, name, size, type, ability)
     VALUES (@id, @name, @size, @type, @ability)
 `);
 
