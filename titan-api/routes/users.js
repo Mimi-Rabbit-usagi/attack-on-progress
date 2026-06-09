@@ -72,4 +72,24 @@ router.patch("/:id", validateUserPatch, (req, res) => {
   }
 });
 
+router.delete("/:id", (req, res) => {
+  try {
+    const deleteUser = db.transaction(() => {
+      const user = db
+        .prepare("SELECT id FROM users WHERE id = ?")
+        .get(req.params.id);
+      if (!user) {
+        return res.status(404).json(`${req.params.id}は見つかりません`);
+      }
+      db.prepare("DELETE FROM users WHERE id=?").run(req.params.id);
+      res.json("削除しました");
+    });
+
+    return deleteUser();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "サーバーエラーが発生しました" });
+  }
+});
+
 module.exports = router;
