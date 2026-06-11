@@ -1,5 +1,6 @@
 const express = require("express");
 const Database = require("better-sqlite3");
+const bcrypt = require("bcrypt");
 const db = new Database(`${__dirname}/../data/titans.db`);
 const router = express.Router();
 const validateUserPatch = require("../middleware/validateUserPatch");
@@ -20,15 +21,16 @@ router.get("/:id", (req, res) => {
   }
 });
 
-router.post("/", (req, res) => {
+router.post("/", async(req, res) => {
   try {
+    const { name, email, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
     const addUser = db.transaction(() => {
-      const { name, email, password } = req.body;
       const result = db
         .prepare(
           "INSERT INTO users (name, email, password, created_at) VALUES (?, ?, ?, ?)",
         )
-        .run(name, email, password, new Date().toISOString());
+        .run(name, email, hashedPassword, new Date().toISOString());
 
       const newUser = db
         .prepare("SELECT id, name, email, created_at FROM users WHERE id = ?")
