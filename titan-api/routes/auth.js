@@ -36,4 +36,14 @@ router.post("/login", async (req, res) => {
   }
 });
 
+router.post("/logout", (req, res) => {
+  try {
+    res.json({ message: "ログアウトしました" });
+    return;
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "サーバーエラーが発生しました" });
+  }
+});
+
 module.exports = router;
