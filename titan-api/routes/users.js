@@ -21,7 +21,7 @@ router.get("/:id", (req, res) => {
   }
 });
 
-router.post("/", async(req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { name, email, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -45,13 +45,21 @@ router.post("/", async(req, res) => {
   }
 });
 
-router.patch("/:id", validateUserPatch, (req, res) => {
+router.patch("/:id", validateUserPatch, async (req, res) => {
   try {
+    const { password } = req.body;
+    let hashedPassword;
+    if (password) {
+      hashedPassword = await bcrypt.hash(password, 10);
+    }
     const updateUser = db.transaction(() => {
       const allowedFields = ["name", "email", "password"];
       const updates = Object.fromEntries(
         Object.entries(req.body).filter(([key]) => allowedFields.includes(key)),
       );
+      if (updates.password) {
+        updates.password = hashedPassword;
+      }
       const setClauses = Object.keys(updates).map((key) => `${key}=?`);
       const values = Object.values(updates);
 
