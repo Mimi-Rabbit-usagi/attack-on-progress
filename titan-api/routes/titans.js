@@ -4,8 +4,9 @@ const Database = require("better-sqlite3");
 const db = new Database(`${__dirname}/../data/titans.db`);
 const validateTitan = require("../middleware/validateTitan");
 const validateTitanPatch = require("../middleware/validateTitanPatch");
+const authenticate = require("../middleware/authenticate");
 
-router.get("/", (req, res) => {
+router.get("/", authenticate, (req, res) => {
   try {
     const { type, minSize, maxSize } = req.query;
 
