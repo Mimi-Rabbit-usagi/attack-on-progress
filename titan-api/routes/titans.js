@@ -6,7 +6,7 @@ const validateTitan = require("../middleware/validateTitan");
 const validateTitanPatch = require("../middleware/validateTitanPatch");
 const authenticate = require("../middleware/authenticate");
 
-router.get("/", authenticate, (req, res) => {
+router.get("/", (req, res) => {
   try {
     const { type, minSize, maxSize } = req.query;
 
@@ -87,7 +87,7 @@ router.get("/:id", (req, res) => {
   }
 });
 
-router.post("/", validateTitan, (req, res) => {
+router.post("/", authenticate, validateTitan, (req, res) => {
   try {
     const addTitan = db.transaction(() => {
       const { name, size, type, ability } = req.body;
@@ -124,7 +124,7 @@ router.post("/", validateTitan, (req, res) => {
   }
 });
 
-router.put("/:id", validateTitan, (req, res) => {
+router.put("/:id", authenticate, validateTitan, (req, res) => {
   try {
     const updateTitan = db.transaction(() => {
       const beforeTitan = db
@@ -170,7 +170,7 @@ router.put("/:id", validateTitan, (req, res) => {
   }
 });
 
-router.patch("/:id", validateTitanPatch, (req, res) => {
+router.patch("/:id", authenticate, validateTitanPatch, (req, res) => {
   try {
     const updateTitan = db.transaction(() => {
       const beforeTitan = db
@@ -223,7 +223,7 @@ router.patch("/:id", validateTitanPatch, (req, res) => {
   }
 });
 
-router.delete("/:id", (req, res) => {
+router.delete("/:id", authenticate, (req, res) => {
   try {
     const deleteTitan = db.transaction(() => {
       const titan = db
