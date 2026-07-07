@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const titansRouter = require("./routes/titans");
 const usersRouter = require("./routes/users");

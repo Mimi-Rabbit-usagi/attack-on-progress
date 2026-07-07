@@ -25,7 +25,7 @@ router.post("/login", async (req, res) => {
         .json({ error: "メールアドレスまたはパスワードが間違っております。" });
       return;
     }
-    const token = jwt.sign({ id: user.id }, "titan_secret", {
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
     res.json({ token });
