@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const db = new Database(`${__dirname}/../data/titans.db`);
 const router = express.Router();
 const validateUserPatch = require("../middleware/validateUserPatch");
+const authenticate = require("../middleware/authenticate");
 
 router.get("/:id", (req, res) => {
   try {
@@ -45,13 +46,18 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.patch("/:id", validateUserPatch, async (req, res) => {
+router.patch("/:id", authenticate, validateUserPatch, async (req, res) => {
   try {
     const { password } = req.body;
     let hashedPassword;
     if (password) {
       hashedPassword = await bcrypt.hash(password, 10);
     }
+
+    if (req.user.id !== Number(req.params.id)) {
+      return res.status(403).json("権限がありません。");
+    }
+
     const updateUser = db.transaction(() => {
       const allowedFields = ["name", "email", "password"];
       const updates = Object.fromEntries(
@@ -82,8 +88,12 @@ router.patch("/:id", validateUserPatch, async (req, res) => {
   }
 });
 
-router.delete("/:id", (req, res) => {
+router.delete("/:id", authenticate, (req, res) => {
   try {
+    if (req.user.id !== Number(req.params.id)) {
+      return res.status(403).json("権限がありません。");
+    }
+
     const deleteUser = db.transaction(() => {
       const user = db
         .prepare("SELECT id FROM users WHERE id = ?")
