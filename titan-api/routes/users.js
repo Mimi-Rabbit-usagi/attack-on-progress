@@ -6,8 +6,11 @@ const router = express.Router();
 const validateUserPatch = require("../middleware/validateUserPatch");
 const authenticate = require("../middleware/authenticate");
 
-router.get("/:id", (req, res) => {
+router.get("/:id", authenticate, (req, res) => {
   try {
+    if (req.user.id !== Number(req.params.id)) {
+      return res.status(403).json("権限がありません。");
+    }
     const user = db
       .prepare("SELECT id, name, email, created_at FROM users WHERE id = ?")
       .get(req.params.id);
